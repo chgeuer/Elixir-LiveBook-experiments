@@ -1,0 +1,79 @@
+# The Explorer demo from launch week
+
+```elixir
+Mix.install([
+  # Kino 0.9.4, Explorer 0.5.7
+  {:kino_explorer, "~> 0.1.7"},
+  {:req, "~> 0.3.10"}
+])
+```
+
+## Section
+
+Copy of the code from the [Launch week](https://news.livebook.dev/data-wrangling-in-elixir-with-explorer-the-power-of-rust-the-elegance-of-r---launch-week-1---day-5-1xqwCI) video.
+
+* https://hexdocs.pm/explorer/exploring_explorer.html
+* https://github.com/westbaystars/first-pitch-homeruns/blob/main/first-pitch-homeruns.livemd
+
+```elixir
+require Explorer.DataFrame, as: DF
+```
+
+```elixir
+url =
+  "https://raw.githubusercontent.com/westbaystars/first-pitch-homeruns/main/balls-in-play-2022.tsv"
+
+resp = Req.get!(url)
+dataset = DF.load_csv!(resp.body, delimiter: "\t")
+```
+
+<!-- livebook:{"attrs":{"assign_to":"grouped","data_frame":"dataset","data_frame_alias":"Elixir.DF","is_data_frame":true,"missing_require":null,"operations":[{"active":true,"column":"Pitches","data_options":{"Date":"string","Game":"integer","Pitch":"string","Pitches":"integer","Player":"string","Result":"string","ResultType":"string","Team":"string","Velocity":"integer","選手":"string"},"datalist":[],"filter":"equal","message":null,"operation_type":"filters","type":"integer","value":"1"},{"active":true,"column":"Result","data_options":{"Date":"string","Game":"integer","Pitch":"string","Pitches":"integer","Player":"string","Result":"string","ResultType":"string","Team":"string","Velocity":"integer","選手":"string"},"datalist":["double","single","home-run","triple"],"filter":"equal","message":null,"operation_type":"filters","type":"string","value":"home-run"},{"active":true,"columns":["Player","Team"],"data_options":{"Date":"string","Game":"integer","Pitch":"string","Pitches":"integer","Player":"string","Result":"string","ResultType":"string","Team":"string","Velocity":"integer","選手":"string"},"operation_type":"group_by"},{"active":true,"columns":["Result"],"data_options":{"Date":"string","Game":"integer","Pitch":"string","Pitches":"integer","Player":"string","Result":"string","ResultType":"string","Team":"string","Velocity":"integer","選手":"string"},"operation_type":"summarise","query":"count"}]},"chunks":null,"kind":"Elixir.KinoExplorer.DataTransformCell","livebook_object":"smart_cell"} -->
+
+```elixir
+grouped =
+  dataset
+  |> DF.filter(col("Pitches") == 1 and col("Result") == "home-run")
+  |> DF.group_by(["Player", "Team"])
+  |> DF.summarise(Result_count: count(col("Result")))
+```
+
+```elixir
+grouped
+|> DF.rename(Result_count: "HR")
+|> DF.arrange(desc: col("HR"))
+|> DF.head(5)
+```
+
+```elixir
+# https://github.com/westbaystars/first-pitch-homeruns/blob/main/first-pitch-homeruns.livemd
+
+dataset
+|> Explorer.DataFrame.filter_with(&Explorer.Series.equal(&1["Result"], "home-run"))
+|> Explorer.DataFrame.group_by(["選手", "Team"])
+|> Explorer.DataFrame.summarise(Pitches: count(col("Pitches")))
+|> Explorer.DataFrame.rename(Pitches: "本塁打")
+|> Explorer.DataFrame.arrange(desc: col("本塁打"))
+|> Explorer.DataFrame.head(30)
+```
+
+```elixir
+fruits = Explorer.Series.from_list(["apple", "mango", "banana", "orange"])
+Explorer.Series.sort(fruits)
+```
+
+```elixir
+mountains =
+  DF.new(
+    name: ["Everest", "K2", "Aconcagua"],
+    elevation: [8848, 8611, 6962]
+  )
+```
+
+```elixir
+DF.filter(mountains, elevation > mean(elevation))
+```
+
+```elixir
+Explorer.Datasets.fossil_fuels()
+|> Explorer.DataFrame.head(10)
+```
