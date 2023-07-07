@@ -1,0 +1,72 @@
+# Trying to load the large Parquet data set from Yoad
+
+```elixir
+Mix.install([
+  # Kino 0.9.4, Explorer 0.5.7
+  {:kino_explorer, "~> 0.1.7"}
+])
+```
+
+## Section
+
+```elixir
+require Explorer.DataFrame, as: DF
+alias Explorer.Series
+```
+
+```elixir
+{raw, analytics, fixedRaw} = {
+  "cs-rawdata-northeurope-production-inventory.parquet",
+  "cs-analytics-lr1-northeurope-production-inventory.parquet",
+  "cs-rawdata-northeurope-production-inventory-fixed.parquet"
+}
+```
+
+```elixir
+defmodule ParquetCleaner do
+  @columnsOfInterest [
+    "Name",
+    "Content-Length",
+    "Creation-Time",
+    "Last-Modified",
+    "LastAccessTime",
+    "AccessTier",
+    "AccessTierChangeTime",
+    "AccessTierInferred",
+    "ArchiveStatus"
+  ]
+
+  def downloaded_file(filename), do: "C:/Users/chgeuer/Downloads/#{filename}"
+
+  def read_and_fix(input_filename, output_filename) do
+    # Read the raw Parquet and convert the epoch values to proper DateTime
+    input_filename
+    |> DF.from_parquet!(columns: @columnsOfInterest)
+    |> DF.mutate(
+      for column <- across(~w(Creation-Time Last-Modified)) do
+        {column.name, cast(column * 1000, :datetime)}
+      end
+    )
+    |> DF.to_parquet!(output_filename)
+  end
+end
+```
+
+```elixir
+ParquetCleaner.read_and_fix(
+  ParquetCleaner.downloaded_file(raw),
+  ParquetCleaner.downloaded_file(fixedRaw)
+)
+```
+
+```elixir
+# Read the dataset from disk
+df =
+  ParquetCleaner.downloaded_file(fixedRaw)
+  |> DF.from_parquet!()
+```
+
+```elixir
+df
+|> DF.describe()
+```

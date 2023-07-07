@@ -17,6 +17,7 @@ Copy of the code from the [Launch week](https://news.livebook.dev/data-wrangling
 
 ```elixir
 require Explorer.DataFrame, as: DF
+alias Explorer.Series
 ```
 
 ```elixir
@@ -48,12 +49,12 @@ grouped
 # https://github.com/westbaystars/first-pitch-homeruns/blob/main/first-pitch-homeruns.livemd
 
 dataset
-|> Explorer.DataFrame.filter_with(&Explorer.Series.equal(&1["Result"], "home-run"))
-|> Explorer.DataFrame.group_by(["選手", "Team"])
-|> Explorer.DataFrame.summarise(Pitches: count(col("Pitches")))
-|> Explorer.DataFrame.rename(Pitches: "本塁打")
-|> Explorer.DataFrame.arrange(desc: col("本塁打"))
-|> Explorer.DataFrame.head(30)
+|> DF.filter_with(&Series.equal(&1["Result"], "home-run"))
+|> DF.group_by(["選手", "Team"])
+|> DF.summarise(Pitches: count(col("Pitches")))
+|> DF.rename(Pitches: "本塁打")
+|> DF.arrange(desc: col("本塁打"))
+|> DF.head(30)
 ```
 
 ```elixir
