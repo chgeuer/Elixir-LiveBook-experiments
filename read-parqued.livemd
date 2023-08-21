@@ -15,26 +15,19 @@ alias Explorer.Series
 ```
 
 ```elixir
-{raw, analytics, fixedRaw} = {
+{raw, analytics, fixedRaw, fixedAnalytics} = {
   "cs-rawdata-northeurope-production-inventory.parquet",
   "cs-analytics-lr1-northeurope-production-inventory.parquet",
-  "cs-rawdata-northeurope-production-inventory-fixed.parquet"
+  "cs-rawdata-northeurope-production-inventory-fixed.parquet",
+  "cs-analytics-lr1-northeurope-production-inventory-fixed.parquet"
 }
 ```
 
 ```elixir
 defmodule ParquetCleaner do
-  @columnsOfInterest [
-    "Name",
-    "Content-Length",
-    "Creation-Time",
-    "Last-Modified",
-    "LastAccessTime",
-    "AccessTier",
-    "AccessTierChangeTime",
-    "AccessTierInferred",
-    "ArchiveStatus"
-  ]
+  @columnsOfInterest ~w(Name Content-Length Creation-Time Last-Modified LastAccessTime AccessTier AccessTierChangeTime AccessTierInferred ArchiveStatus)
+
+  @analyticsColumsOfInterest ~w(Name Content-Length Creation-Time Last-Modified LastAccessTime AccessTier)
 
   def downloaded_file(filename), do: "C:/Users/chgeuer/Downloads/#{filename}"
 
@@ -43,7 +36,7 @@ defmodule ParquetCleaner do
     input_filename
     |> DF.from_parquet!(columns: @columnsOfInterest)
     |> DF.mutate(
-      for column <- across(~w(Creation-Time Last-Modified)) do
+      for column <- across(~w(Creation-Time Last-Modified LastAccessTime)) do
         {column.name, cast(column * 1000, :datetime)}
       end
     )
@@ -53,20 +46,61 @@ end
 ```
 
 ```elixir
-ParquetCleaner.read_and_fix(
-  ParquetCleaner.downloaded_file(raw),
-  ParquetCleaner.downloaded_file(fixedRaw)
-)
+# ParquetCleaner.read_and_fix(
+#   ParquetCleaner.downloaded_file(raw),
+#   ParquetCleaner.downloaded_file(fixedRaw)
+# )
+
+# ParquetCleaner.read_and_fix(
+#   ParquetCleaner.downloaded_file(analytics),
+#   ParquetCleaner.downloaded_file(fixedAnalytics)
+# )
 ```
 
 ```elixir
 # Read the dataset from disk
 df =
-  ParquetCleaner.downloaded_file(fixedRaw)
+  ParquetCleaner.downloaded_file(fixedAnalytics)
   |> DF.from_parquet!()
 ```
 
 ```elixir
 df
 |> DF.describe()
+```
+
+```elixir
+df
+|> DF.names()
+```
+
+```elixir
+df |> DF.head(5) |> DF.table()
+```
+
+```elixir
+df |> DF.head(5)
+```
+
+```elixir
+# Summarize the amount of content
+
+bytes =
+  df
+  |> DF.to_series()
+  |> Map.get("Content-Length")
+  |> Series.sum()
+
+kiloByte = bytes / 1024
+megaByte = kiloByte / 1024
+gigaByte = megaByte / 1024
+teraByte = gigaByte / 1024
+
+[
+  byte: round(bytes),
+  kilo: round(kiloByte),
+  mega: round(megaByte),
+  giga: round(gigaByte),
+  tera: round(teraByte)
+]
 ```

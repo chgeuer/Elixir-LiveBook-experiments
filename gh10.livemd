@@ -1,0 +1,51 @@
+<!-- livebook:{"app_settings":{"auto_shutdown_ms":5000,"multi_session":true,"slug":"github"}} -->
+
+# Multi-session
+
+```elixir
+Mix.install([
+  {:req, "~> 0.3.10"},
+  {:kino, "~> 0.10.0"}
+])
+```
+
+## Section
+
+```elixir
+gh =
+  Req.new(
+    base_url: "https://api.github.com",
+    auth: {:bearer, System.fetch_env!("LB_GITHUB_TOKEN")},
+    headers: [
+      {"Accept", "application/vnd.github+json"},
+      {"X-GitHub-API-Version", "2022-11-28"}
+    ]
+  )
+
+Kino.nothing()
+```
+
+```elixir
+repo =
+  "OWNER/REPO"
+  |> Kino.Input.text()
+  |> Kino.render()
+  |> Kino.Input.read()
+
+if not String.contains?(repo, "/") do
+  Kino.interrupt!(:normal, "Please enter your OWNER/REPO")
+end
+
+case Req.get!(gh, url: "repos/#{repo}/security-advisories") do
+  %{status: 200, body: body} ->
+    "You got #{length(body)} reports"
+
+  %{status: 404} ->
+    Kino.interrupt!(:error, "Repo #{repo} does not exist")
+
+  %{status: status} ->
+    Kino.interrupt!(:error, "Failed with status #{status}")
+end
+```
+
+<!-- livebook:{"offset":976,"stamp":{"token":"QTEyOEdDTQ.1InteHHktZteeJzAGVjKsSMIG5PPBrvGc0F_oPb78w9JNndvrXzvlywalmg.gVve6C314wrZyGu0.qxjmmJrqR-sa4JYWp2KCQBGHZEgcvxsJ-ORFPo_klr1-kDJW2nVHIjiEORtbbes.5pjnS1YLISAttgg5lO1mpA","version":1}} -->

@@ -1,0 +1,49 @@
+# Untitled notebook
+
+## Section
+
+```elixir
+defmodule Fib do
+  @doc ~S"""
+    Calculate Fibonacci
+
+    ## Examples
+      iex> Fib.fib(0)
+      0
+
+      iex> Fib.fib(1)
+      1
+
+      iex> Fib.fib(2)
+      1
+
+      iex> Fib.fib(3)
+      2
+  """
+
+  def fib(0), do: 0
+  def fib(1), do: 1
+
+  def fib(n) do
+    Process.sleep(:timer.seconds(1))
+    fib(n - 1) + fib(n - 2)
+  end
+end
+```
+
+```erlang
+R = 3,
+S = 1,
+
+Add = fun(A,B) -> A + B end,
+
+Add(R,S).
+```
+
+```elixir
+binding()
+```
+
+```elixir
+add.(r, s)
+```
